@@ -1,5 +1,6 @@
 package edu.upvictoria.fpoo;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.function.Consumer;
 import java.util.Collection;
@@ -7,6 +8,7 @@ import java.io.File;
 
 public class Analyzer {
     private final HashMap<String, Consumer<String>> keywords = new HashMap<>();
+    private  final HashMap<String, Consumer<String>> pseudoKeywords = new HashMap<>();
     private final String appRoute = new File("").getAbsolutePath() + "\\";
 
     public Analyzer(){
@@ -22,52 +24,64 @@ public class Analyzer {
         keywords.put("DELETE", this::handleDelete);
         keywords.put("FROM", this::handleFrom);
         keywords.put("WHERE", this::handleWhere);
-        keywords.put("AND", this::handleAnd);
-        keywords.put("OR", this::handleOr);
-        keywords.put("NOT", this::handleNot);
         keywords.put("UPDATE", this::handleUpdate);
         keywords.put("SET", this::handleSet);
         keywords.put("SELECT", this::handleSelect);
-        keywords.put("AS", this::handleAs);
         keywords.put("ORDER BY", this::handleOrder);
         keywords.put("GROUP BY", this::handleGroup);
         keywords.put("LIMIT", this::handleLimit);
-        keywords.put("NULL", this::handleNull);
-        keywords.put("PRIMARY KEY", this::handlePrimary);
-        keywords.put("NUMBER", this::handleNumber);
-        keywords.put("VARCHAR", this::handleVarchar);
-        keywords.put("CHAR", this::handleChar);
-        keywords.put("BOOLEAN", this::handleBoolean);
-        keywords.put("DATE", this::handleDate);
-        keywords.put("IN", this::handleIn);
+
+        pseudoKeywords.put("AND", this::handleAnd);
+        pseudoKeywords.put("OR", this::handleOr);
+        pseudoKeywords.put("NOT", this::handleNot);
+        pseudoKeywords.put("AS", this::handleAs);
+        pseudoKeywords.put("NULL", this::handleNull);
+        pseudoKeywords.put("PRIMARY KEY", this::handlePrimary);
+        pseudoKeywords.put("NUMBER", this::handleNumber);
+        pseudoKeywords.put("VARCHAR", this::handleVarchar);
+        pseudoKeywords.put("CHAR", this::handleChar);
+        pseudoKeywords.put("BOOLEAN", this::handleBoolean);
+        pseudoKeywords.put("DATE", this::handleDate);
+        pseudoKeywords.put("IN", this::handleIn);
     }
 
-    public boolean analyze(String line){
+    public void analyzeSyntax(String line) throws IOException {
+        boolean found = false;
+        System.out.println("linea a analizar:" + line);
+
         for(String keyword : keywords.keySet()){
             if(line.contains(keyword)){
+                found = true;
                 keywords.get(keyword).accept(line);
-                return true;
             }
         }
 
-        System.out.println("ERR: Sentencia no Reconocida\n");
-        return false;
+        if(!found){
+            throw new IOException("NOT RECOGNIZABLE KEYWORDS");
+        }
     }
 
-    public String clean(String line){
-        int endOfKeyword = line.indexOf(" ");
+    public String clean(String line, String keyword) throws StringIndexOutOfBoundsException {
+        int endOfKeyword = line.indexOf(keyword) + keyword.length();
         int semicolon = line.indexOf(";");
-        line = line.substring(endOfKeyword + 1, semicolon);
 
-        if(line.contains(";")){
-            return null;
+        try {
+            line = line.substring(endOfKeyword + 1, semicolon);
+        } catch (StringIndexOutOfBoundsException e) {
+            throw new StringIndexOutOfBoundsException("UNEXPECTED ERROR OCURRED");
         }
 
+        System.out.println("linea limpia: " + line);
         return line;
     }
 
     public void handleUse(String line){
-        String givenPath = clean(line);
+        try {
+            String givenPath = clean(line,"USE");
+        } catch (StringIndexOutOfBoundsException e){
+            //namas pa que no ande molestando
+        }
+
 
     }
 
