@@ -6,7 +6,7 @@ import java.io.InputStreamReader;
 import java.text.ParseException;
 
 public class Reader {
-    public static StringBuffer consoleReader(Analyzer analyzer) throws IOException, ParseException {
+    public StringBuffer consoleReader(Analyzer analyzer) throws IOException, ParseException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
         try{
@@ -31,16 +31,15 @@ public class Reader {
                 }
             }
 
-            return Reader.formatInput(inputLines, analyzer);
+            return formatInput(inputLines, analyzer);
 
         } catch (IOException e) {
             throw new IOException(e.getMessage());
         }
     }
 
-    public static StringBuffer formatInput(StringBuffer input, Analyzer analyzer){
+    public StringBuffer formatInput(StringBuffer input, Analyzer analyzer){
         int lastIndex = 0;
-        boolean firstKeyWord = true;
 
         for(String keyword : analyzer.getKeywords()) {
             int index = input.indexOf(keyword, lastIndex);
@@ -51,7 +50,7 @@ public class Reader {
             }
         }
 
-        if(input.indexOf("\n") < 3){
+        if(input.indexOf("\n") < 3 && input.indexOf("\n") != -1){
             input.deleteCharAt(input.indexOf("\n"));
         }
 

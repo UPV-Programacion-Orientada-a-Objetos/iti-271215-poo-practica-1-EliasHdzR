@@ -1,178 +1,132 @@
 package edu.upvictoria.fpoo;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.function.Consumer;
-import java.util.Collection;
+import java.nio.file.FileSystemException;
+import java.util.ArrayList;
 import java.io.File;
 
 public class Analyzer {
-    private final HashMap<String, Consumer<String>> keywords = new HashMap<>();
-    private  final HashMap<String, Consumer<String>> pseudoKeywords = new HashMap<>();
-    private final String appRoute = new File("").getAbsolutePath() + "\\";
+    private final ArrayList<String> keywords = new ArrayList<>();
+    private final SQL sql = new SQL();
+    //private final ArrayList<String> pseudoKeywords = new ArrayList<>();
 
     public Analyzer(){
-        keywords.put("USE", this::handleUse);
-        keywords.put("SHOW TABLES", this::handleShow);
-        keywords.put("TABLE", this::handleTable);
-        keywords.put("DATABASE", this::handleDatabase);
-        keywords.put("CREATE", this::handleCreate);
-        keywords.put("DROP", this::handleDrop);
-        keywords.put("INSERT", this::handleInsert);
-        keywords.put("INTO", this::handleInto);
-        keywords.put("VALUES", this::handleValues);
-        keywords.put("DELETE", this::handleDelete);
-        keywords.put("FROM", this::handleFrom);
-        keywords.put("WHERE", this::handleWhere);
-        keywords.put("UPDATE", this::handleUpdate);
-        keywords.put("SET", this::handleSet);
-        keywords.put("SELECT", this::handleSelect);
-        keywords.put("ORDER BY", this::handleOrder);
-        keywords.put("GROUP BY", this::handleGroup);
-        keywords.put("LIMIT", this::handleLimit);
+        keywords.add("USE");
+        keywords.add("SHOW TABLES");
+        keywords.add("CREATE DATABASE");
+        keywords.add("CREATE TABLE");
+        keywords.add("DROP DATABASE");
+        keywords.add("DROP TABLE");
+        keywords.add("INSERT INTO");
+        keywords.add("VALUES");
+        keywords.add("DELETE FROM");
+        keywords.add("FROM");
+        keywords.add("WHERE");
+        keywords.add("UPDATE");
+        keywords.add("SET");
+        keywords.add("SELECT");
+        keywords.add("ORDER BY");
+        keywords.add("GROUP BY");
+        keywords.add("LIMIT");
 
-        pseudoKeywords.put("AND", this::handleAnd);
-        pseudoKeywords.put("OR", this::handleOr);
-        pseudoKeywords.put("NOT", this::handleNot);
-        pseudoKeywords.put("AS", this::handleAs);
-        pseudoKeywords.put("NULL", this::handleNull);
-        pseudoKeywords.put("PRIMARY KEY", this::handlePrimary);
-        pseudoKeywords.put("NUMBER", this::handleNumber);
-        pseudoKeywords.put("VARCHAR", this::handleVarchar);
-        pseudoKeywords.put("CHAR", this::handleChar);
-        pseudoKeywords.put("BOOLEAN", this::handleBoolean);
-        pseudoKeywords.put("DATE", this::handleDate);
-        pseudoKeywords.put("IN", this::handleIn);
+        /*pseudoKeywords.add("AND");
+        pseudoKeywords.add("OR");
+        pseudoKeywords.add("NOT");
+        pseudoKeywords.add("AS");
+        pseudoKeywords.add("NULL");
+        pseudoKeywords.add("PRIMARY KEY");
+        pseudoKeywords.add("NUMBER");
+        pseudoKeywords.add("VARCHAR");
+        pseudoKeywords.add("CHAR");
+        pseudoKeywords.add("BOOLEAN");
+        pseudoKeywords.add("DATE");
+        pseudoKeywords.add("IN");*/
     }
 
-    public void analyzeSyntax(String line) throws IOException {
+    public Object analyzeSyntax(String line, Object object) throws Exception {
         boolean found = false;
-        System.out.println("linea a analizar:" + line);
 
-        for(String keyword : keywords.keySet()){
-            if(line.contains(keyword)){
+        for(String keyword : keywords){
+            if(line.startsWith(keyword)){
                 found = true;
-                keywords.get(keyword).accept(line);
+
+                try {
+                    //lets get funky
+                    switch (keyword) {
+                        case "USE":
+                            File dbFile = sql.handleUse(line, keyword);
+                            Database database = new Database();
+                            database.setDbFile(dbFile);
+                            database.retrieveTables();
+                            return database;
+
+                        case "SHOW TABLES":
+                            sql.handleShowTables(line, keyword);
+                            break;
+                        case "CREATE TABLE":
+                            sql.handleCreateTable(line, keyword);
+                            break;
+                        case "CREATE DATABASE":
+                            sql.handleCreateDatabase(line, keyword);
+                            break;
+                        case "DROP TABLE":
+                            sql.handleDropTable(line, keyword);
+                            break;
+                        case "DROP DATABASE":
+                            sql.handleDropDatabase(line, keyword);
+                            break;
+                        case "INSERT INTO":
+                            sql.handleInsertInto(line, keyword);
+                            break;
+                        case "VALUES":
+                            sql.handleValues(line, keyword);
+                            break;
+                        case "DELETE FROM":
+                            sql.handleDeleteFrom(line, keyword);
+                            break;
+                        case "FROM":
+                            sql.handleFrom(line, keyword);
+                            break;
+                        case "UPDATE":
+                            sql.handleUpdate(line, keyword);
+                            break;
+                        case "SET":
+                            sql.handleSet(line, keyword);
+                            break;
+                        case "SELECT":
+                            sql.handleSelect(line, keyword);
+                            break;
+                        case "ORDER BY":
+                            sql.handleOrder(line, keyword);
+                            break;
+                        case "GROUP BY":
+                            sql.handleGroup(line, keyword);
+                            break;
+                        case "LIMIT":
+                            sql.handleLimit(line, keyword);
+                            break;
+                    }
+
+                } catch (StringIndexOutOfBoundsException e) {
+                    throw new StringIndexOutOfBoundsException("ERROR WHILE PARSING");
+                } catch (FileNotFoundException e) {
+                    throw new FileNotFoundException("FILE NOT FOUND");
+                } catch (FileSystemException e) {
+                    throw new FileSystemException("NOT A DATABASE");
+                } catch (Exception e){
+                    throw new Exception("AN ERROR OCURRED WHILE EXECUTING COMMAND " + e.getMessage());
+                }
             }
         }
 
         if(!found){
             throw new IOException("NOT RECOGNIZABLE KEYWORDS");
         }
+        return null;
     }
 
-    public String clean(String line, String keyword) throws StringIndexOutOfBoundsException {
-        int endOfKeyword = line.indexOf(keyword) + keyword.length();
-        int semicolon = line.indexOf(";");
-
-        try {
-            line = line.substring(endOfKeyword + 1, semicolon);
-        } catch (StringIndexOutOfBoundsException e) {
-            throw new StringIndexOutOfBoundsException("UNEXPECTED ERROR OCURRED");
-        }
-
-        System.out.println("linea limpia: " + line);
-        return line;
-    }
-
-    public void handleUse(String line){
-        try {
-            String givenPath = clean(line,"USE");
-        } catch (StringIndexOutOfBoundsException e){
-            //namas pa que no ande molestando
-        }
-
-
-    }
-
-    public void handleShow(String line){
-    }
-
-    public void handleTable(String line){
-    }
-
-    public void handleDatabase(String line){
-    }
-
-    public void handleCreate(String line){
-    }
-
-    public void handleDrop(String line){
-    }
-
-    public void handleInsert(String line){
-    }
-
-    public void handleInto(String line){
-    }
-
-    public void handleValues(String line){
-    }
-
-    public void handleDelete(String line){
-    }
-
-    public void handleFrom(String line){
-    }
-
-    public void handleWhere(String line){
-    }
-
-    public void handleAnd(String line){
-    }
-
-    public void handleOr(String line){
-    }
-
-    public void handleNot(String line){
-    }
-
-    public void handleUpdate(String line){
-    }
-
-    public void handleSet(String line){
-    }
-
-    public void handleSelect(String line){
-    }
-
-    public void handleAs(String line){
-    }
-
-    public void handleOrder(String line){
-    }
-
-    public void handleGroup(String line){
-    }
-
-    public void handleLimit(String line){
-    }
-
-    public void handleNull(String line){
-    }
-
-    public void handlePrimary(String line){
-    }
-
-    public void handleNumber(String line){
-    }
-
-    public void handleVarchar(String line){
-    }
-
-    public void handleChar(String line){
-    }
-
-    public void handleBoolean(String line){
-    }
-
-    public void handleDate(String line){
-    }
-
-    public void handleIn(String line){
-    }
-
-    public Collection<String> getKeywords() {
-        return keywords.keySet();
+    public ArrayList<String> getKeywords() {
+        return keywords;
     }
 }
