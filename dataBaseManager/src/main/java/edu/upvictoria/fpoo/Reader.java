@@ -4,9 +4,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Reader {
-    public StringBuffer consoleReader(Analyzer analyzer) throws IOException, ParseException {
+    public ArrayList<String> consoleReader(Analyzer analyzer) throws IOException, ParseException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
         try{
@@ -31,7 +33,9 @@ public class Reader {
                 }
             }
 
-            return formatInput(inputLines, analyzer);
+            inputLines = formatInput(inputLines, analyzer);
+            String[] splitLines = inputLines.toString().split("\n");
+            return new ArrayList<>(Arrays.asList(splitLines));
 
         } catch (IOException e) {
             throw new IOException(e.getMessage());

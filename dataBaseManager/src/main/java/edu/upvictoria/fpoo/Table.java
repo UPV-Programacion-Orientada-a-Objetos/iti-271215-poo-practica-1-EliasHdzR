@@ -1,38 +1,51 @@
 package edu.upvictoria.fpoo;
 
-/**
- * OBJECT IS THE WAY
- */
+// OBJECT IS THE WAY
 
+
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystemException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Table {
-    private File tableFile;
-    ArrayList<ArrayList<Object>> data;
+    private final File tableFile;
+    ArrayList<ArrayList<Object>> data =  new ArrayList<>();
 
-    public Table(File tableFile, ArrayList<ArrayList<Object>> data){
+    public Table(File tableFile) throws FileSystemException {
         this.tableFile = tableFile;
-        this.data = data;
-    }
+        Charset charset = StandardCharsets.UTF_8;
 
-    public Table(File tableFile){
-        this.tableFile = tableFile;
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(tableFile, charset));
+            String line;
+
+            while((line = br.readLine()) != null){
+                String[] stringValues = line.split(",");
+
+                ArrayList<Object> objectValues = new ArrayList<>(Arrays.asList(stringValues));
+                this.data.add(objectValues);
+            }
+        } catch (IOException e){
+            throw new FileSystemException("AN ERROR OCURRED WHILE OPENING FILE");
+        }
     }
 
     public File getTableFile() {
         return tableFile;
     }
 
-    public void setTableFile(File tableFile) {
-        this.tableFile = tableFile;
-    }
-
-    public ArrayList<ArrayList<Object>> getColumns() {
-        return data;
-    }
-
-    public void setColumns(ArrayList<ArrayList<Object>> data) {
-        this.data = data;
+    public void printData(){
+        for (ArrayList<Object> datum : data) {
+            for (Object object : datum) {
+                System.out.print(object + " | ");
+            }
+            System.out.println();
+        }
     }
 }

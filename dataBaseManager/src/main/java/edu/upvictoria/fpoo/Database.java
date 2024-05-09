@@ -1,17 +1,24 @@
 package edu.upvictoria.fpoo;
 
 import java.io.File;
+import java.nio.file.FileSystemException;
 import java.util.ArrayList;
 import java.util.Objects;
 
 public class Database {
     private File dbFile;
-    private ArrayList<Table> tables;
+    private final ArrayList<Table> tables = new ArrayList<>();
 
-    public void retrieveTables(){
-        for(File file : Objects.requireNonNull(this.dbFile.listFiles())){
-
+    public void retrieveTables() throws RuntimeException {
+        try {
+            for(File file : Objects.requireNonNull(this.dbFile.listFiles())){
+                Table table = new Table(file);
+                addTable(table);
+            }
+        } catch (FileSystemException e) {
+            throw new RuntimeException(e.getMessage());
         }
+
     }
 
     public void setDbFile(File dbFile) {
@@ -24,6 +31,12 @@ public class Database {
 
     public ArrayList<Table> getTables() {
         return tables;
+    }
+
+    public void printTables(){
+        for(Table table : this.tables){
+            System.out.println("\t" + table.getTableFile().getName());
+        }
     }
 
     public void addTable(Table table) {

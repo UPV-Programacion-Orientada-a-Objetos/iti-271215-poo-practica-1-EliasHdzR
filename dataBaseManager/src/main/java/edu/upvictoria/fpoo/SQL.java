@@ -2,9 +2,7 @@ package edu.upvictoria.fpoo;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.nio.file.FileSystemException;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.NotDirectoryException;
+import java.nio.file.*;
 
 public class SQL {
     public String clean(String line, String keyword) throws StringIndexOutOfBoundsException {
@@ -29,14 +27,14 @@ public class SQL {
             throw new StringIndexOutOfBoundsException(e.getMessage());
         }
 
-        File database = new File(new File("").getAbsolutePath() + "/" + givenPath);
+        File database = new File(Paths.get("").toAbsolutePath().resolve(givenPath).toString());
 
         if(!database.exists()){
             throw new FileNotFoundException();
         }
 
         if(!database.isDirectory()){
-            throw new NotDirectoryException(givenPath);
+            throw new NotDirectoryException("GIVEN PATH IS NOT A DIRECTORY: " + givenPath);
         }
 
         if(!database.getName().endsWith("_DB")){
@@ -46,13 +44,36 @@ public class SQL {
         return database;
     }
 
-    public void handleShowTables(String line, String keyword){
-    }
-
     public void handleCreateTable(String line, String keyword){
+
     }
 
-    public void handleCreateDatabase(String line, String keyword){
+    public void handleCreateDatabase(String line, String keyword) throws FileSystemException {
+        String givenPath;
+
+        try {
+            givenPath = clean(line,keyword);
+        } catch (StringIndexOutOfBoundsException e){
+            throw new StringIndexOutOfBoundsException(e.getMessage());
+        }
+
+        File database = new File(Paths.get("").toAbsolutePath().resolve(givenPath).toString());
+
+        if(database.exists()){
+            throw new FileAlreadyExistsException(givenPath);
+        }
+
+        if(!database.getName().endsWith("_DB")){
+            throw new NoSuchFileException(givenPath);
+        }
+
+        if(!database.getParentFile().canWrite()){
+            throw new AccessDeniedException("NO PERMISSION IN GIVEN PATH: " + givenPath);
+        }
+
+        if(!database.mkdir()){
+            throw new SecurityException("FAILED TO CREATE DIRECTORY AT " + givenPath);
+        }
     }
 
     public void handleDropTable(String line, String keyword){
@@ -95,15 +116,6 @@ public class SQL {
     }
 
     public void handleAs(String line, String keyword){
-    }
-
-    public void handleOrder(String line, String keyword){
-    }
-
-    public void handleGroup(String line, String keyword){
-    }
-
-    public void handleLimit(String line, String keyword){
     }
 
     public void handleNull(String line, String keyword){
