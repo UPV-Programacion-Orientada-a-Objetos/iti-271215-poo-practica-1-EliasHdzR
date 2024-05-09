@@ -98,6 +98,7 @@ public class Analyzer {
                             }
 
                             sql.handleDropTable(line, keyword, this.database);
+                            refreshDB(this.database.getDbFile());
                             break;
 
                         case "DROP DATABASE":
@@ -141,6 +142,8 @@ public class Analyzer {
                     throw new NoSuchFileException("NOT A DATABASE: " + e.getMessage());
                 } catch (FileSystemException e) {
                     throw new FileSystemException(e.getMessage());
+                } catch (IOException e) {
+                    throw new IOException(e.getMessage());
                 } catch (Exception e){
                     throw new Exception("AN ERROR OCURRED WHILE EXECUTING COMMAND: " + e.getMessage());
                 }

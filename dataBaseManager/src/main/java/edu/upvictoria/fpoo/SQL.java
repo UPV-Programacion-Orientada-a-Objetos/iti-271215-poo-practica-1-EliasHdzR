@@ -3,8 +3,7 @@ package edu.upvictoria.fpoo;
 import edu.upvictoria.fpoo.exceptions.NotFileException;
 import edu.upvictoria.fpoo.exceptions.WrongFileExtensionException;
 
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.*;
 import java.nio.file.*;
 import java.util.ArrayList;
 
@@ -101,18 +100,32 @@ public class SQL {
         }
     }
 
-    public void handleDropTable(String line, String keyword, Database database) throws FileSystemException, FileNotFoundException {
+    public void handleDropTable(String line, String keyword, Database database) throws IOException {
         String givenName;
 
         try {
-            givenName = clean(line,keyword);
-        } catch (StringIndexOutOfBoundsException e){
+            givenName = clean(line, keyword);
+        } catch (StringIndexOutOfBoundsException e) {
             throw new StringIndexOutOfBoundsException(e.getMessage());
         }
 
-        for (Table table : database.getTables()){
-            if(table.getTableName().equals(givenName)){
-                if(!table.getTableFile().delete()){
+        for (Table table : database.getTables()) {
+            if (table.getTableName().equals(givenName)) {
+
+                System.out.print("DO YOU REALLY WANT TO DELETE THE TABLE? Y/N\n ~ ");
+
+                try {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+                    String decision = reader.readLine().toUpperCase();
+
+                    if(!decision.equals("Y")){
+                        throw new IOException("USER REFUSED DROP TABLE PROCESS");
+                    }
+                } catch (IOException e) {
+                    throw new IOException(e.getMessage());
+                }
+
+                if (!table.getTableFile().delete()) {
                     throw new FileSystemException("COULD NOT DELETE THE FILE AT: " + table.getTableFile().getAbsolutePath());
                 } else {
                     return;
@@ -121,30 +134,6 @@ public class SQL {
         }
 
         throw new FileNotFoundException("FILE NOT FOUND");
-
-        /*String extension = "";
-        int i = table.getName().lastIndexOf('.');
-        if(i > 0) {
-            extension = table.getName().substring(i + 1).toLowerCase();
-        }
-        System.out.println(extension);
-
-        if(!table.exists()){
-            throw new FileNotFoundException("FILE NOT FOUND AT: " + givenPath);
-        }
-
-        if(!table.isFile()){
-            throw new NotFileException("NOT A FILE GIVEN AT: " + givenPath);
-        }
-
-        if(extension.equals("csv")){
-            throw new WrongFileExtensionException("NOT .CSV GIVEN AT: " + givenPath);
-        }
-
-        if(!table.delete()){
-            throw new FileSystemException("COULD NOT DELETE THE FILE AT: " + givenPath);
-        }*/
-
     }
 
     public void handleDropDatabase(String line, String keyword){
