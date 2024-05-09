@@ -9,9 +9,14 @@ import java.io.File;
 
 public class Analyzer {
     private final ArrayList<String> keywords = new ArrayList<>();
+    private final ArrayList<String> pseudoKeywords = new ArrayList<>();
+    private final ArrayList<String> dataTypes = new ArrayList<>();
+    private final ArrayList<String> dataModifiers = new ArrayList<>();
+    private final ArrayList<String> relations = new ArrayList<>();
+
     private final SQL sql = new SQL();
     private Database database = new Database();
-    //private final ArrayList<String> pseudoKeywords = new ArrayList<>();
+
 
     public Analyzer(){
         keywords.add("USE");
@@ -29,18 +34,22 @@ public class Analyzer {
         keywords.add("SET");
         keywords.add("SELECT");
 
-        /*pseudoKeywords.add("AND");
+        pseudoKeywords.add("AND");
         pseudoKeywords.add("OR");
         pseudoKeywords.add("NOT");
         pseudoKeywords.add("AS");
-        pseudoKeywords.add("NULL");
-        pseudoKeywords.add("PRIMARY KEY");
-        pseudoKeywords.add("NUMBER");
-        pseudoKeywords.add("VARCHAR");
-        pseudoKeywords.add("CHAR");
-        pseudoKeywords.add("BOOLEAN");
-        pseudoKeywords.add("DATE");
-        pseudoKeywords.add("IN");*/
+
+        dataModifiers.add("NULL");
+
+        relations.add("PRIMARY KEY");
+        relations.add("FOREIGN KEY");
+
+        dataTypes.add("NUMBER");
+        dataTypes.add("VARCHAR");
+        dataTypes.add("CHAR");
+        dataTypes.add("BOOLEAN");
+        dataTypes.add("DATE");
+        dataTypes.add("INT");
     }
 
     public void analyzeSyntax(String line, int totalLines) throws Exception {
@@ -71,7 +80,7 @@ public class Analyzer {
                             this.database.printTables();
                             break;
 
-                        case "CREATE TABLE":
+                        case "CREATE TABLE": //WIP
                             sql.handleCreateTable(line, keyword);
                             break;
 
@@ -84,7 +93,11 @@ public class Analyzer {
                             break;
 
                         case "DROP TABLE":
-                            sql.handleDropTable(line, keyword);
+                            if(totalLines > 1){
+                                throw new IOException("SYNTAX ERROR");
+                            }
+
+                            sql.handleDropTable(line, keyword, this.database);
                             break;
 
                         case "DROP DATABASE":
@@ -121,11 +134,11 @@ public class Analyzer {
                     }
 
                 } catch (StringIndexOutOfBoundsException e) {
-                    throw new StringIndexOutOfBoundsException("ERROR WHILE PARSING");
+                    throw new StringIndexOutOfBoundsException("ERROR WHILE PARSING: " + e.getMessage());
                 } catch (FileNotFoundException e) {
-                    throw new FileNotFoundException("FILE NOT FOUND");
+                    throw new FileNotFoundException("FILE NOT FOUND: " + e.getMessage());
                 } catch (NoSuchFileException e) {
-                    throw new NoSuchFileException("NOT A DATABASE");
+                    throw new NoSuchFileException("NOT A DATABASE: " + e.getMessage());
                 } catch (FileSystemException e) {
                     throw new FileSystemException(e.getMessage());
                 } catch (Exception e){
@@ -141,6 +154,10 @@ public class Analyzer {
 
     public ArrayList<String> getKeywords() {
         return keywords;
+    }
+
+    public ArrayList<String> getPseudoKeywords() {
+        return pseudoKeywords;
     }
 
     public void refreshDB(File file){

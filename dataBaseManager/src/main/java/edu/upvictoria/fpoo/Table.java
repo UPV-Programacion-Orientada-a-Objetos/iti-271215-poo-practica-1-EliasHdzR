@@ -2,7 +2,6 @@ package edu.upvictoria.fpoo;
 
 // OBJECT IS THE WAY
 
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -14,11 +13,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Table {
+    private final String tableName;
     private final File tableFile;
     ArrayList<ArrayList<Object>> data =  new ArrayList<>();
 
     public Table(File tableFile) throws FileSystemException {
         this.tableFile = tableFile;
+        int i = tableFile.getName().indexOf('.');
+        this.tableName = tableFile.getName().substring(0,i);
+
         Charset charset = StandardCharsets.UTF_8;
 
         try {
@@ -47,5 +50,9 @@ public class Table {
             }
             System.out.println();
         }
+    }
+
+    public String getTableName() {
+        return tableName;
     }
 }

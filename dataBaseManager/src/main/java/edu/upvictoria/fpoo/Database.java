@@ -35,7 +35,7 @@ public class Database {
 
     public void printTables(){
         for(Table table : this.tables){
-            System.out.println("\t" + table.getTableFile().getName());
+            System.out.println("\t" + table.getTableName());
         }
     }
 
