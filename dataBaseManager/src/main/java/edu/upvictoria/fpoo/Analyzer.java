@@ -1,7 +1,9 @@
 package edu.upvictoria.fpoo;
 
+import edu.upvictoria.fpoo.exceptions.ColumnDoesNotMatch;
 import edu.upvictoria.fpoo.exceptions.DataTypeNotFoundException;
 import edu.upvictoria.fpoo.exceptions.DatabaseNotSetException;
+import edu.upvictoria.fpoo.exceptions.InsuficientDataProvidedException;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -29,7 +31,6 @@ public class Analyzer {
         keywords.add("DROP DATABASE");
         keywords.add("DROP TABLE");
         keywords.add("INSERT INTO");
-        keywords.add("VALUES");
         keywords.add("DELETE FROM");
         keywords.add("FROM");
         keywords.add("WHERE");
@@ -41,6 +42,7 @@ public class Analyzer {
         pseudoKeywords.add("OR");
         pseudoKeywords.add("NOT");
         pseudoKeywords.add("AS");
+        pseudoKeywords.add("VALUES");
 
         dataModifiers.add("NULL");
 
@@ -124,27 +126,23 @@ public class Analyzer {
                             break;
 
                         case "INSERT INTO":
-                            sql.handleInsertInto(line, keyword);
-                            break;
+                            if(database.getDbFile() == null){
+                                throw new DatabaseNotSetException("USE COMMAND NOT EXECUTED");
+                            }
 
-                        case "VALUES":
-                            sql.handleValues(line, keyword);
+                            if(totalLines > 1){
+                                throw new IOException("SYNTAX ERROR");
+                            }
+
+                            sql.handleInsertInto(line, keyword, this.database);
                             break;
 
                         case "DELETE FROM":
                             sql.handleDeleteFrom(line, keyword);
                             break;
 
-                        case "FROM":
-                            sql.handleFrom(line, keyword);
-                            break;
-
                         case "UPDATE":
                             sql.handleUpdate(line, keyword);
-                            break;
-
-                        case "SET":
-                            sql.handleSet(line, keyword);
                             break;
 
                         case "SELECT":
@@ -153,7 +151,7 @@ public class Analyzer {
                     }
 
                 } catch (StringIndexOutOfBoundsException e) {
-                    throw new StringIndexOutOfBoundsException("ERROR WHILE PARSING: " + e.getMessage());
+                    throw new StringIndexOutOfBoundsException("ERROR WHILE PARSING: MISSING EXPRESSIONS" + e.getMessage());
 
                 } catch (FileNotFoundException e) {
                     throw new FileNotFoundException("FILE NOT FOUND: " + e.getMessage());
@@ -166,6 +164,12 @@ public class Analyzer {
 
                 } catch (DataTypeNotFoundException e) {
                     throw new DataTypeNotFoundException(e.getMessage());
+
+                } catch (InsuficientDataProvidedException e) {
+                    throw new InsuficientDataProvidedException(e.getMessage());
+
+                } catch (ColumnDoesNotMatch e) {
+                    throw new ColumnDoesNotMatch(e.getMessage());
 
                 } catch (IOException e) {
                     throw new IOException(e.getMessage());

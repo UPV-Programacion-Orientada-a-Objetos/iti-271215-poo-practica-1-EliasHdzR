@@ -78,7 +78,6 @@ public class Table {
 
             out.println(line);
             out.flush();
-            System.out.println(line);
         } catch (IOException e) {
             throw new IOException(e.getMessage());
         }
@@ -91,5 +90,9 @@ public class Table {
             }
             System.out.println();
         }
+    }
+
+    public ArrayList<String> getColumnsName(){
+        return data.get(0);
     }
 }
