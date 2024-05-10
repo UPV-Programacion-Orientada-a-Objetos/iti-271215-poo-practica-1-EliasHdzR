@@ -133,6 +133,7 @@ public class Analyzer {
                             }
 
                             sql.handleInsertInto(line, keyword, this.database);
+                            refreshDB(this.database.getDbFile());
                             break;
 
                         case "DELETE FROM":
