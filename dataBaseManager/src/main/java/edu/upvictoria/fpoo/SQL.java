@@ -1,7 +1,7 @@
 package edu.upvictoria.fpoo;
 
-import edu.upvictoria.fpoo.exceptions.NotFileException;
-import edu.upvictoria.fpoo.exceptions.WrongFileExtensionException;
+
+import edu.upvictoria.fpoo.exceptions.DataTypeNotFoundException;
 
 import java.io.*;
 import java.nio.file.*;
@@ -15,27 +15,40 @@ public class SQL {
         try {
             line = line.substring(endOfKeyword + 1, semicolon).trim();
         } catch (StringIndexOutOfBoundsException e) {
-            throw new StringIndexOutOfBoundsException("STRING OUT OF BOUNDS");
+            throw new StringIndexOutOfBoundsException("NOT VALUES GIVEN");
         }
 
         return line;
     }
 
-    public ArrayList<String> splitValues(String line) {
+    public ArrayList<String> splitValues(String line) throws DataTypeNotFoundException {
+        Analyzer analyzer = new Analyzer();
+        ArrayList<String> dataTypes = analyzer.getDataTypes();
         ArrayList<String> columns = new ArrayList<>();
         String tableName;
+        boolean foundDataType = false;
 
         try {
             tableName = line.substring(0, line.indexOf("(")).trim();
+            line = line.substring(tableName.length() + 1).trim();
         } catch (StringIndexOutOfBoundsException e){
-            throw new StringIndexOutOfBoundsException("TABLE NAME NOT FOUND / RECOGNIZED");
+            throw new StringIndexOutOfBoundsException("TABLE NAME NOT FOUND");
         }
-
         columns.add(tableName);
-
         String[] values = line.split(",");
         for(String value : values){
-            value = value.substring(0,value.indexOf(" "));
+            for(String dataType : dataTypes){
+                if(value.contains(dataType)){
+                    foundDataType = true;
+                    break;
+                }
+            }
+
+            if(!foundDataType){
+                throw new DataTypeNotFoundException("DATA TYPE" +  "NOT FOUND IN LINE " + value);
+            }
+
+            value = value.substring(0,value.indexOf(" ")).trim();
             columns.add(value);
         }
 
@@ -68,8 +81,50 @@ public class SQL {
         return database;
     }
 
-    public void handleCreateTable(String line, String keyword){
+    public void handleCreateTable(String line, String keyword, Database database) throws IOException {
+        String cleanedLine;
+        ArrayList<String> columns;
 
+        try {
+            cleanedLine = clean(line, keyword);
+        } catch (StringIndexOutOfBoundsException e) {
+            throw new StringIndexOutOfBoundsException(e.getMessage());
+        }
+        System.out.println(cleanedLine);
+        try {
+            columns = splitValues(cleanedLine);
+        } catch (DataTypeNotFoundException e) {
+            throw new DataTypeNotFoundException(e.getMessage());
+        }
+
+        File tableFile = getFile(database, columns);
+        columns.remove(0);
+        Table newTable = new Table(tableFile, columns);
+
+        database.addTable(newTable);
+        newTable.appendData(columns);
+    }
+
+    private static File getFile(Database database, ArrayList<String> columns) throws IOException {
+        File tableFile = new File(database.getDbFile().getAbsolutePath() + "/" + columns.get(0) + ".csv");
+
+        if(tableFile.exists()){
+            throw new FileAlreadyExistsException("NAME ALREADY IN USE: " + tableFile.getAbsolutePath());
+        }
+
+        if(!tableFile.getParentFile().canWrite()){
+            throw new AccessDeniedException("NO PERMISSION IN GIVEN PATH: " + tableFile.getAbsolutePath());
+        }
+
+        try{
+            if (!tableFile.createNewFile()) {
+                throw new SecurityException("FAILED TO CREATE DIRECTORY AT " + tableFile.getAbsolutePath());
+            }
+        } catch (IOException e) {
+            throw new IOException(e.getMessage());
+        }
+
+        return tableFile;
     }
 
     public void handleCreateDatabase(String line, String keyword) throws FileSystemException {
@@ -84,11 +139,11 @@ public class SQL {
         File database = new File(Paths.get("").toAbsolutePath().resolve(givenPath).toString());
 
         if(database.exists()){
-            throw new FileAlreadyExistsException(givenPath);
+            throw new FileAlreadyExistsException("NAME ALREADY IN USE: " + givenPath);
         }
 
         if(!database.getName().endsWith("_DB")){
-            throw new NoSuchFileException(givenPath);
+            throw new NoSuchFileException("NOT DABASE GIVEN: " + givenPath);
         }
 
         if(!database.getParentFile().canWrite()){
@@ -134,9 +189,6 @@ public class SQL {
         }
 
         throw new FileNotFoundException("FILE NOT FOUND");
-    }
-
-    public void handleDropDatabase(String line, String keyword){
     }
 
     public void handleInsertInto(String line, String keyword){

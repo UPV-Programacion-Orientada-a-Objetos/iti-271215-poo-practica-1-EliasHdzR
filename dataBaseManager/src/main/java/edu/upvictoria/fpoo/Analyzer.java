@@ -1,5 +1,8 @@
 package edu.upvictoria.fpoo;
 
+import edu.upvictoria.fpoo.exceptions.DataTypeNotFoundException;
+import edu.upvictoria.fpoo.exceptions.DatabaseNotSetException;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.FileSystemException;
@@ -50,13 +53,15 @@ public class Analyzer {
         dataTypes.add("BOOLEAN");
         dataTypes.add("DATE");
         dataTypes.add("INT");
+        dataTypes.add("DOUBLE");
+        dataTypes.add("FLOAT");
     }
 
     public void analyzeSyntax(String line, int totalLines) throws Exception {
         boolean found = false;
 
         for(String keyword : keywords){
-            if(line.startsWith(keyword)){
+            if(line.startsWith(keyword) && (line.charAt(keyword.length()) == ' ' || line.charAt(keyword.length()) == ';')){
                 found = true;
 
                 try {
@@ -72,6 +77,10 @@ public class Analyzer {
                             break;
 
                         case "SHOW TABLES":
+                            if(database.getDbFile() == null){
+                                throw new DatabaseNotSetException("USE COMMAND NOT EXECUTED");
+                            }
+
                             if(totalLines > 1 || line.length() > (keyword.length() + 1)){
                                 throw new IOException("SYNTAX ERROR");
                             }
@@ -80,8 +89,17 @@ public class Analyzer {
                             this.database.printTables();
                             break;
 
-                        case "CREATE TABLE": //WIP
-                            sql.handleCreateTable(line, keyword);
+                        case "CREATE TABLE":
+                            if(database.getDbFile() == null){
+                                throw new DatabaseNotSetException("USE COMMAND NOT EXECUTED");
+                            }
+
+                            if(totalLines > 1){
+                                throw new IOException("SYNTAX ERROR");
+                            }
+
+                            sql.handleCreateTable(line, keyword, this.database);
+                            refreshDB(this.database.getDbFile());
                             break;
 
                         case "CREATE DATABASE":
@@ -93,16 +111,16 @@ public class Analyzer {
                             break;
 
                         case "DROP TABLE":
+                            if(database.getDbFile() == null){
+                                throw new DatabaseNotSetException("USE COMMAND NOT EXECUTED");
+                            }
+
                             if(totalLines > 1){
                                 throw new IOException("SYNTAX ERROR");
                             }
 
                             sql.handleDropTable(line, keyword, this.database);
                             refreshDB(this.database.getDbFile());
-                            break;
-
-                        case "DROP DATABASE":
-                            sql.handleDropDatabase(line, keyword);
                             break;
 
                         case "INSERT INTO":
@@ -136,14 +154,22 @@ public class Analyzer {
 
                 } catch (StringIndexOutOfBoundsException e) {
                     throw new StringIndexOutOfBoundsException("ERROR WHILE PARSING: " + e.getMessage());
+
                 } catch (FileNotFoundException e) {
                     throw new FileNotFoundException("FILE NOT FOUND: " + e.getMessage());
+
                 } catch (NoSuchFileException e) {
                     throw new NoSuchFileException("NOT A DATABASE: " + e.getMessage());
+
                 } catch (FileSystemException e) {
                     throw new FileSystemException(e.getMessage());
+
+                } catch (DataTypeNotFoundException e) {
+                    throw new DataTypeNotFoundException(e.getMessage());
+
                 } catch (IOException e) {
                     throw new IOException(e.getMessage());
+
                 } catch (Exception e){
                     throw new Exception("AN ERROR OCURRED WHILE EXECUTING COMMAND: " + e.getMessage());
                 }
@@ -161,6 +187,18 @@ public class Analyzer {
 
     public ArrayList<String> getPseudoKeywords() {
         return pseudoKeywords;
+    }
+
+    public ArrayList<String> getDataTypes() {
+        return dataTypes;
+    }
+
+    public ArrayList<String> getDataModifiers() {
+        return dataModifiers;
+    }
+
+    public ArrayList<String> getRelations() {
+        return relations;
     }
 
     public void refreshDB(File file){

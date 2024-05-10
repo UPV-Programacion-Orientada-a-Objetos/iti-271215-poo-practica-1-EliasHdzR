@@ -37,7 +37,7 @@ public class App {
                     analyzer.analyzeSyntax(line, lines.size());
                 }
             } catch (IOException e){
-                System.out.println("ERR: Sentencia no reconocida: " + e.getMessage() + "\n");
+                System.out.println("ERR: Error en la Sentencia: " + e.getMessage() + "\n");
             } catch (Exception e){
                 System.out.println("ERR: " + e.getMessage() + "\n");
             }
