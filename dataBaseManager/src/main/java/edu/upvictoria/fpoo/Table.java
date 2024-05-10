@@ -86,7 +86,28 @@ public class Table {
     public void printData(){
         for (ArrayList<String> datum : data) {
             for (String object : datum) {
-                System.out.print(object + " | ");
+                System.out.print("| " + object + "\t");
+            }
+            System.out.println("|");
+            for (int i = 0; i < datum.size(); i++) {
+                System.out.print("+------------");
+            }
+            System.out.println("+");
+        }
+    }
+
+    public void printData(ArrayList<String> columns) {
+        ArrayList<Integer> columnIndexes = new ArrayList<>();
+        for(String column : columns){
+            int i = data.get(0).indexOf(column);
+            if (i != -1) {
+                columnIndexes.add(i);
+            }
+        }
+
+        for(ArrayList<String> datum : data){
+            for(int columnIndex : columnIndexes){
+                System.out.print(datum.get(columnIndex) + " | ");
             }
             System.out.println();
         }

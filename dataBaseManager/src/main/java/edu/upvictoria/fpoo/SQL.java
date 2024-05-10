@@ -1,6 +1,5 @@
 package edu.upvictoria.fpoo;
 
-
 import edu.upvictoria.fpoo.exceptions.ColumnDoesNotMatch;
 import edu.upvictoria.fpoo.exceptions.DataTypeNotFoundException;
 import edu.upvictoria.fpoo.exceptions.InsuficientDataProvidedException;
@@ -290,8 +289,6 @@ public class SQL {
         if(!tableExists){
             throw new NoSuchFileException("TABLE DOES NOT EXISTS");
         }
-
-
     }
 
     public void handleDeleteFrom(String line, String keyword){
@@ -300,6 +297,60 @@ public class SQL {
     public void handleUpdate(String line, String keyword){
     }
 
-    public void handleSelect(String line, String keyword){
+    public void handleSelect(String line, String keyword, Database database) throws StringIndexOutOfBoundsException, NoSuchFileException, ColumnDoesNotMatch {
+        ArrayList<String> columns = new ArrayList<>();
+        ArrayList<String> showingCol = new ArrayList<>();
+        String cleanedLine, selectedColumns, selectedTable;
+        boolean tableExists = false;
+
+        try{
+            cleanedLine = clean(line, keyword);
+            selectedColumns = cleanedLine.substring(0,cleanedLine.indexOf("FROM")-1);
+
+            if(cleanedLine.contains("WHERE")){
+                selectedTable = cleanedLine.substring(cleanedLine.indexOf("FROM ") + "FROM".length() + 1, cleanedLine.indexOf(" WHERE"));
+            } else {
+                selectedTable = cleanedLine.substring(cleanedLine.indexOf("FROM ") + "FROM".length() + 1).trim();
+            }
+
+            if(!selectedColumns.equals("*")){
+                selectedColumns = "(" + selectedColumns + ")";
+                columns = splitInsertionColumns(selectedColumns, false);
+            }
+
+        } catch (StringIndexOutOfBoundsException e) {
+            throw new StringIndexOutOfBoundsException();
+        }
+
+        ArrayList<Table> tables = database.getTables();
+        for(Table table : tables) {
+            if (table.getTableName().equals(selectedTable)) {
+                tableExists = true;
+
+                if(!selectedColumns.equals("*")){
+                    for(String tableCol : table.getColumnsName()){
+                        for(String selecCol : columns) {
+                            if(tableCol.equals(selecCol)){
+                                showingCol.add(tableCol);
+                            }
+                        }
+                    }
+
+                    if(showingCol.size() < columns.size()){
+                        throw new ColumnDoesNotMatch("COLUMN DOES NOT MATCH");
+                    }
+
+                    table.printData(showingCol);
+
+                } else {
+                    table.printData();
+                }
+                break;
+            }
+        }
+
+        if(!tableExists){
+            throw new NoSuchFileException("TABLE DOES NOT EXISTS");
+        }
     }
 }

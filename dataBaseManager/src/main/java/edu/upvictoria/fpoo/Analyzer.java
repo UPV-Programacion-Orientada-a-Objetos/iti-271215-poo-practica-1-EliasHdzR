@@ -21,19 +21,15 @@ public class Analyzer {
 
     private final SQL sql = new SQL();
     private Database database = new Database();
-
-
+    
     public Analyzer(){
         keywords.add("USE");
         keywords.add("SHOW TABLES");
         keywords.add("CREATE DATABASE");
         keywords.add("CREATE TABLE");
-        keywords.add("DROP DATABASE");
         keywords.add("DROP TABLE");
         keywords.add("INSERT INTO");
         keywords.add("DELETE FROM");
-        keywords.add("FROM");
-        keywords.add("WHERE");
         keywords.add("UPDATE");
         keywords.add("SET");
         keywords.add("SELECT");
@@ -43,6 +39,8 @@ public class Analyzer {
         pseudoKeywords.add("NOT");
         pseudoKeywords.add("AS");
         pseudoKeywords.add("VALUES");
+        pseudoKeywords.add("FROM");
+        pseudoKeywords.add("WHERE");
 
         dataModifiers.add("NULL");
 
@@ -146,7 +144,11 @@ public class Analyzer {
                             break;
 
                         case "SELECT":
-                            sql.handleSelect(line, keyword);
+                            if(database.getDbFile() == null){
+                                throw new DatabaseNotSetException("USE COMMAND NOT EXECUTED");
+                            }
+
+                            sql.handleSelect(line,keyword,database);
                             break;
                     }
 
@@ -189,20 +191,8 @@ public class Analyzer {
         return keywords;
     }
 
-    public ArrayList<String> getPseudoKeywords() {
-        return pseudoKeywords;
-    }
-
     public ArrayList<String> getDataTypes() {
         return dataTypes;
-    }
-
-    public ArrayList<String> getDataModifiers() {
-        return dataModifiers;
-    }
-
-    public ArrayList<String> getRelations() {
-        return relations;
     }
 
     public void refreshDB(File file){
