@@ -32,7 +32,7 @@ public class SQL {
 
         try {
             tableName = line.substring(0, line.indexOf("(")).trim();
-            line = line.substring(tableName.length() + 1).trim();
+            line = line.substring(tableName.length()).trim();
 
             if(!(line.startsWith("(") && line.endsWith(")"))){
                 throw new StringIndexOutOfBoundsException();
